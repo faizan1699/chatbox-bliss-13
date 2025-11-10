@@ -1,101 +1,97 @@
 import { useState } from "react";
-import { MessageSquare } from "lucide-react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { ChatSidebar } from "@/components/ChatSidebar";
-import { ChatMessage } from "@/components/ChatMessage";
-import { ChatInput } from "@/components/ChatInput";
-
-interface Message {
-  id: string;
-  message: string;
-  sender: string;
-  timestamp: string;
-  isSent: boolean;
-}
-
-const initialMessages: Message[] = [
-  {
-    id: "1",
-    message: "Hey! How's the project coming along?",
-    sender: "Sarah",
-    timestamp: "10:30 AM",
-    isSent: false,
-  },
-  {
-    id: "2",
-    message: "Going great! Just finished the new chat interface design.",
-    sender: "You",
-    timestamp: "10:32 AM",
-    isSent: true,
-  },
-  {
-    id: "3",
-    message: "That's awesome! Can't wait to see it.",
-    sender: "Sarah",
-    timestamp: "10:33 AM",
-    isSent: false,
-  },
-  {
-    id: "4",
-    message: "I'll share the mockups in a few minutes.",
-    sender: "You",
-    timestamp: "10:35 AM",
-    isSent: true,
-  },
-];
+import { Search, ChefHat } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { RecipeCard } from "@/components/RecipeCard";
+import { CategoryFilter } from "@/components/CategoryFilter";
+import { recipes, categories } from "@/data/recipes";
+import heroCooking from "@/assets/hero-cooking.jpg";
 
 const Index = () => {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSendMessage = (message: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      message,
-      sender: "You",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isSent: true,
-    };
-    setMessages([...messages, newMessage]);
-  };
+  const filteredRecipes = recipes.filter((recipe) => {
+    const matchesCategory = activeCategory === "All" || recipe.category === activeCategory;
+    const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <ChatSidebar />
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative h-[500px] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={heroCooking}
+            alt="Cooking ingredients"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40" />
+        </div>
         
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="h-16 border-b border-border bg-background flex items-center px-6 gap-4">
-            <SidebarTrigger />
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-6 w-6 text-primary" />
-              <div>
-                <h1 className="font-semibold text-lg">General Chat</h1>
-                <p className="text-xs text-muted-foreground">4 members online</p>
-              </div>
+        <div className="relative z-10 text-center px-4 max-w-3xl mx-auto">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <ChefHat className="h-12 w-12 text-primary" />
+            <h1 className="text-5xl md:text-6xl font-bold text-white">Flavorly</h1>
+          </div>
+          <p className="text-xl md:text-2xl text-white/90 mb-8">
+            Discover amazing recipes from around the world
+          </p>
+          
+          {/* Search Bar */}
+          <div className="flex gap-2 max-w-xl mx-auto">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+              <Input
+                type="text"
+                placeholder="Search recipes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 bg-white/95 backdrop-blur"
+              />
             </div>
-          </header>
+            <Button size="lg" className="h-12 px-8">
+              Search
+            </Button>
+          </div>
+        </div>
+      </section>
 
-          {/* Messages Area */}
-          <main className="flex-1 overflow-y-auto bg-muted/30 p-6">
-            <div className="max-w-4xl mx-auto">
-              {messages.map((msg) => (
-                <ChatMessage
-                  key={msg.id}
-                  message={msg.message}
-                  sender={msg.sender}
-                  timestamp={msg.timestamp}
-                  isSent={msg.isSent}
-                />
+      {/* Category Filter */}
+      <section className="py-8 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <CategoryFilter
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+        </div>
+      </section>
+
+      {/* Recipes Grid */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-8 text-center">
+            {activeCategory === "All" ? "All Recipes" : `${activeCategory} Recipes`}
+          </h2>
+          
+          {filteredRecipes.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRecipes.map((recipe) => (
+                <RecipeCard key={recipe.id} {...recipe} />
               ))}
             </div>
-          </main>
-
-          {/* Input Area */}
-          <ChatInput onSendMessage={handleSendMessage} />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-xl text-muted-foreground">
+                No recipes found. Try a different search or category.
+              </p>
+            </div>
+          )}
         </div>
-      </div>
-    </SidebarProvider>
+      </section>
+    </div>
   );
 };
 
